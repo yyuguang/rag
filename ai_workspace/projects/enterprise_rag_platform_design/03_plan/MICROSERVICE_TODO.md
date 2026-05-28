@@ -1,9 +1,27 @@
 # 文档信息
 
 - 文档名称：MICROSERVICE_TODO.md
-- 当前状态：已完成
-- 最近更新阶段：task-planner
-- 最近更新原因：基于 C 方案“绞杀者式渐进拆分”和本轮服务合并调整，生成微服务方向可执行原子 TASK
+- 当前状态：已合并 / 已废弃为主入口
+- 最近更新阶段：task-planner 合并计划入口
+- 最近更新原因：微服务演进 TASK 已合并进入 `03_plan/TODO.md`，本文仅保留历史追溯，不再作为主计划入口
+
+# 已合并 / 废弃说明
+
+`MICROSERVICE_TODO.md` 已完成迁移，不再作为后续任务计划主入口。后续任务计划只读取：
+
+- `03_plan/TODO.md`
+
+本文正文保留上一轮微服务任务拆分的历史材料。当前有效微服务演进 TASK 已合并到 `TODO.md` 的“阶段 8：微服务演进 TASK”，并继续保留 7 个阶段：
+
+1. 冻结模块边界和契约。
+2. 先拆 `auth-service` 和 `audit-service`，其中 `auth-service` 合并 tenant / IAM 能力。
+3. 再拆 `kb-service`、`document-service`。
+4. 再拆 `document-worker`、`embedding-service`。
+5. 再拆 `llm-gateway-service`、`prompt-service`。
+6. 再拆 `retrieval-service`、`rag-chat-service`。
+7. 最后拆 `feedback-service`、`evaluation-service`、`statistics-service`、`admin-config-service`。
+
+后续实施不得只读取本文，也不得跳过 `TODO.md`、TDD Gate 或用户本轮“禁止直接编码、禁止创建 Java 服务工程”的限制。
 
 # 0. Workflow Orchestrator 任务识别
 

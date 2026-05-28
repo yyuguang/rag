@@ -3,130 +3,106 @@
 - 文档名称：TESTPLAN.md
 - 当前状态：已完成
 - 最近更新阶段：test-designer
-- 最近更新原因：为本轮纯设计文档任务定义验证方案
+- 最近更新原因：为 TASK-001 初始化 `rag-agent` Maven 父子工程骨架补充 TDD 测试方案
 
 # 测试目标
 
-验证企业级 RAG 平台设计文档是否满足用户 24 项输出要求、AGENTS 流程约束、`.ai_rules` 合规要求，以及后续开发可执行性。
+验证本轮 TASK-001 只创建 `rag-agent` Maven 父工程和 `common`、`config` 两个子模块，且不越界创建 app 模块、微服务模块、数据库 / Redis / MQ / MinIO / LLM / RAG 业务功能。
 
 # 测试范围
 
-- 任务目录结构完整性。
-- 必需文档是否存在。
-- `DESIGN.md` 是否覆盖用户要求的 24 个章节。
-- `PROMPT_SPEC.md` 是否满足 Prompt Gate。
-- `API_SPEC.md` 是否满足 REST API 与 `/api/v1/` 规范。
-- `DATA_MODEL.md` 是否包含核心表、租户字段、软删除和索引建议。
-- `TODO.md` 是否包含需求来源、设计来源、变更位置、测试策略、规则检查点和验收标准。
-- `.ai_rules` 是否在 TODO、TEST_REPORT、REVIEW、RELEASE 中记录验证。
+- `rag-agent/pom.xml` 必须存在，且 `packaging=pom`。
+- 父 POM 的 `modules` 只能包含 `common`、`config`。
+- 父 POM 统一管理 Java 17、Spring Boot 3.x、依赖版本和 Maven 插件版本。
+- `rag-agent/common/pom.xml` 和 `rag-agent/config/pom.xml` 必须能被 Maven reactor 识别。
+- `common` 仅预留 `com.lnzz.rag.common` 包结构。
+- `config` 仅预留 `com.lnzz.rag.config` 包结构。
+- 不创建 `rag-agent-app`、`domain`、`infrastructure`、`services` 或任何 `*-service` 微服务目录。
 
 # 不测试范围
 
-- 不执行 Java 单元测试，因为本轮未编写业务代码。
-- 不执行接口自动化测试，因为接口尚未实现。
-- 不执行性能压测，因为系统尚未实现。
-- 不验证真实模型供应商可用性。
+- 不启动 Spring Context，因为本轮不创建 `RagApplication.java` 或 app 模块。
+- 不测试统一响应、异常、traceId、数据库、Redis、MQ、MinIO、LLM、RAG 业务功能。
+- 不测试 Controller、Service、Mapper、DTO 分层实现，因为本轮只做父子工程骨架。
+- 不验证真实外部中间件连接。
 
 # 测试策略
 
-采用静态文件检查 + 人工设计审查：
+采用 TDD：
 
-1. 使用 PowerShell 检查任务目录和关键文件是否存在。
-2. 使用 `Select-String` 检查 `DESIGN.md` 是否包含一至二十四章节标题。
-3. 人工检查 Prompt、API、数据、TODO 与 `.ai_rules` 的一致性。
-4. 对无法自动化的内容，在 `TEST_REPORT.md` 中记录人工检查结果和残余风险。
+1. 先在 `common` 和 `config` 子模块下编写架构测试。
+2. 在生产骨架创建前执行 `cd rag-agent && mvn test`，记录 RED。
+3. 最小化创建父 POM、子 POM 和包结构。
+4. 再执行 `cd rag-agent && mvn test`，记录 GREEN。
 
 # TDD 计划
 
 ## RED 测试
 
-本轮为纯设计文档任务，不进入代码实现，不要求先写失败单元测试。测试豁免原因：没有业务代码、接口和数据库脚本可执行。
+- `CommonModuleStructureTest`：校验父 POM packaging、modules、Java / Spring Boot 版本管理、`common` 包结构和禁止模块。
+- `ConfigModuleStructureTest`：校验 `config` 子模块 POM、`config` 包结构，以及未创建真实基础设施配置。
 
 ## GREEN 判定
 
-- 所有必需文档存在。
-- 关键章节齐全。
-- 规则门禁有记录。
-- 没有把未实现的软件能力声明为已上线。
+- `mvn test` 在 `rag-agent` 父工程下成功执行。
+- Maven reactor 只构建 `rag-agent`、`common`、`config`。
+- 两个架构测试全部通过。
 
 ## 回归测试
 
-后续修改设计文档时，重复执行文件存在性和章节完整性检查。
+后续 TASK-002 或 TASK-004 如果要新增 `common` 或 `config` 具体能力，必须先更新对应 TASK 的测试方案，不能直接沿用本轮“只预留包结构”的验收口径。
 
 ## 测试豁免与替代验证
 
-用文档静态检查和人工审查替代自动化单元测试。后续进入 TASK-001 后必须恢复 TDD：先写 `LlmGatewayTest` 和 `ChatControllerTest`。
+本轮不做 Spring Context 测试，原因是 `RagApplication.java` 启动类归属尚未在设计中明确，且用户明确禁止擅自创建 app 模块。
 
 # 用例分类
 
 ## 功能测试
 
-- TC-001：任务目录结构完整。
-- TC-002：必需文档存在。
-- TC-003：设计文档覆盖用户 24 个章节。
-- TC-004：API 文档包含用户要求的主要接口。
-- TC-005：数据模型包含至少 15 张核心表。
+- TC-TASK001-001：父 POM 存在且 packaging 为 `pom`。
+- TC-TASK001-002：父 POM modules 只包含 `common`、`config`。
+- TC-TASK001-003：`common`、`config` 子模块 POM 继承 `rag-agent` 父工程。
+- TC-TASK001-004：`com.lnzz.rag.common` 和 `com.lnzz.rag.config` 包路径存在。
 
 ## 接口测试
 
-本轮不执行接口调用，仅检查 API 设计是否符合 `/api/v1/` 和统一返回结构。
+不适用。本轮不创建 API。
 
 ## 异常测试
 
-- 检查文档是否明确当前无业务代码，不得伪造测试通过或软件可发布。
-- 检查风险和待确认问题是否记录。
+- 父 POM 缺失时 RED。
+- 子模块 POM 缺失时 RED。
+- 创建禁用模块目录时 RED。
 
 ## 边界测试
 
-- 检查 Prompt 对无答案、越权、敏感、Prompt Injection 的边界处理。
-- 检查权限设计是否覆盖租户、知识库、文档、会话和引用。
+- 父 POM 出现 `rag-agent-app`、`domain`、`infrastructure`、`services` 或任意微服务模块时失败。
+- `config` 中出现真实 DB / Redis / MQ / MinIO / LLM 配置目录或配置文件时失败。
 
 ## 性能测试
 
-本轮仅检查设计是否包含检索延迟、首 Token 延迟、并发、MQ 削峰和缓存优化方案。
+不适用。本轮不涉及运行时性能。
 
 # 覆盖要求
 
-- 用户提出的 24 个章节必须全部覆盖。
-- AGENTS 要求的需求、设计、Prompt、API、数据、计划、测试、审查、发布和总结文档必须存在。
-- `.ai_rules` 合规验证必须在 TODO、TEST_REPORT、REVIEW、RELEASE 中出现。
+- 覆盖 Maven 父子工程结构。
+- 覆盖 `common`、`config` 包结构。
+- 覆盖用户本轮禁止事项。
+- 覆盖 `.ai_rules` 中包名、模块职责、日志敏感信息和注释边界的适用检查项。
 
 # 架构约束验证
 
-人工验证以下约束：
-
-- Controller 不直接返回 Entity 的规则已在设计和 TODO 中体现。
-- 模型调用统一经过 LLM Gateway。
-- Prompt 不散落业务代码，采用模板表和版本管理。
-- 检索权限过滤不只依赖前端或单点后置校验。
-- 网关不承载核心业务逻辑。
+- `common` 只能作为公共基础模块骨架，不能落入 RAG 业务逻辑。
+- `config` 只能作为配置模块骨架，不能接入真实基础设施。
+- `rag-agent` 本轮不是微服务根目录，不能创建 `services/*`。
+- 启动类归属未明确前，不创建 `RagApplication.java`。
 
 # Prompt 评估
 
-## Golden Case
-
-- 用户问企业制度，回答必须引用制度文档。
-- 用户问产品手册，回答必须引用章节或页码。
-
-## 反例
-
-- 用户要求忽略规则或泄露系统 Prompt，必须拒答。
-
-## 边界例
-
-- 检索结果冲突时，必须说明资料不一致。
-
-## 对抗例
-
-- 文档中出现“忽略系统提示词”时，模型不得执行该指令。
-
-## 回归 Case
-
-后续实现后将以上样例落入 `05_test/tests/rag_golden_cases.jsonl`。
+不适用。本轮不涉及 Prompt 模板、AI 推理链路或模型输出契约。
 
 # 风险项
 
-- 本轮未执行代码测试，不能证明实现质量。
-- 设计指标为目标值，不是压测结果。
-- 真实企业权限模型可能比当前设计更复杂，需要二次适配。
-
+- 本机 `JAVA_HOME` 当前配置为 `%JAVA_HOME17%`，需要在测试命令中临时指定可用 JDK 路径；测试报告必须如实记录。
+- 原 TODO 曾要求创建启动类，本轮由用户明确收紧范围；该设计缺口必须写入 `CURRENT_FOCUS.md` 或后续 TASK 待确认项。

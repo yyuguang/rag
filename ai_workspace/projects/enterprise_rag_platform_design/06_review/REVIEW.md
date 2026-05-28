@@ -3,104 +3,95 @@
 - 文档名称：REVIEW.md
 - 当前状态：已完成
 - 最近更新阶段：code-reviewer
-- 最近更新原因：审查本轮新增微服务 API、数据模型、任务拆分文档与 C 方案和 auth-service 合并 tenant / IAM 口径的一致性
+- 最近更新原因：审查 TASK-001 Maven 父子工程骨架实现、TDD 记录和 `.ai_rules` 执行情况
 
 # 审查结论
 
-通过。本轮新增的 `MICROSERVICE_API_SPEC.md`、`MICROSERVICE_DATA_MODEL.md` 和 `MICROSERVICE_TODO.md` 能在既有模块化单体设计和 `MICROSERVICE_DESIGN.md` 基础上，落实用户明确拍板的 C 方案：绞杀者式渐进拆分。
+通过。本轮实现严格限定在 `rag-agent` Maven 父工程、`common` 子模块和 `config` 子模块，没有创建 `rag-agent-app`、微服务工程或 TASK-002 业务功能。
 
-关键口径已修正：第一阶段不单独拆 `tenant-service`，也不单独拆 `iam-service`；租户、用户、部门、角色、权限、权限快照、租户配置、租户配额和服务间鉴权先合并进 `auth-service`。
-
-当前交付结论仅适用于设计和计划文档，不代表软件实现已完成或可发布。
+当前结论仅适用于 TASK-001 工程骨架，不代表系统已经可启动、可对外提供 API 或可发布。
 
 # 优点
 
-- 服务清单已调整为 14 个服务，避免第一阶段拆分过细。
-- `auth-service` 职责被明确扩大，覆盖认证、租户、IAM、权限快照、租户配置、租户配额和服务间鉴权。
-- API 文档不仅列服务，还落到每个接口的路径、方法、调用方、鉴权、DTO、错误码、幂等、超时、重试、熔断和审计要求。
-- 数据模型文档明确独立 schema、表归属、Outbox、Inbox / consume log、缓存 key 和索引归属。
-- 微服务 TODO 按用户要求的 7 个阶段拆分为 23 个原子 TASK，且每个 TASK 包含 RED/GREEN、测试文件、测试命令和 `.ai_rules` 检查点。
-- 关键链路口径清晰：RAG 问答、文档上传、管理后台都必须先经过 `auth-service` 权限链路。
-- 保留后续演进说明：IAM / tenant 复杂化、独立团队维护或多系统复用后，可再从 `auth-service` 拆出独立服务。
+- 遵循 TDD：先写 `CommonModuleStructureTest`、`ConfigModuleStructureTest`，先运行 RED，再最小实现并运行 GREEN。
+- 父 POM `packaging=pom`，`modules` 只有 `common`、`config`。
+- 父 POM 统一管理 Java 17、Spring Boot 3.x、依赖 BOM 和 Maven 插件版本。
+- `common`、`config` 子模块均可被 Maven reactor 识别并通过测试。
+- 包路径符合 `com.lnzz.rag.common` 和 `com.lnzz.rag.config`。
+- 未创建 app、domain、infrastructure、services 或任何 `*-service` 微服务目录。
+- 未实现统一响应、异常、traceId、数据库、Redis、MQ、MinIO、LLM、RAG 业务功能。
 
 # 问题列表
 
 无阻断问题。
 
-## RV-MS-3
+## RV-TASK001-1
 
 - 严重级别：低
-- 位置：`02_design/MICROSERVICE_DESIGN.md`
-- 问题描述：该历史基础文档正文中仍保留上一轮 16 服务拆分的详细内容，包含独立 `tenant-service` 和 `iam-service` 章节。
-- 风险说明：如果后续 Agent 只读旧正文、不读本轮新增文档，可能误以为第一阶段仍要拆独立 tenant / IAM 服务。
-- 修改建议：本轮已在 `MICROSERVICE_DESIGN.md` 顶部新增“本轮修订覆盖说明”，并明确后续以 `MICROSERVICE_API_SPEC.md`、`MICROSERVICE_DATA_MODEL.md`、`MICROSERVICE_TODO.md` 为准。下一轮若继续做架构清理，可进一步重写旧文档正文，消除历史口径。
+- 位置：本机环境变量
+- 问题描述：全局 `JAVA_HOME` 当前值为 `%JAVA_HOME17%`，直接执行 `mvn` 会失败。
+- 风险说明：后续开发者如果不设置可用 JDK，Maven 测试无法启动。
+- 修改建议：后续可在本机修正 `JAVA_HOME` 到 JDK 17 或 JDK 21 路径；当前 POM 已用 `release=17` 固定 Java 17 编译目标。
 
-## RV-MS-4
+## RV-TASK001-2
 
 - 严重级别：低
-- 位置：`03_plan/MICROSERVICE_TODO.md`
-- 问题描述：微服务任务已经拆到 23 个 TASK，但仍未进入测试设计和测试代码阶段。
-- 风险说明：如果下一轮直接创建服务工程，会违反 TDD Gate。
-- 修改建议：下一轮只选择 `MS-TASK-001`，先进入 `test-designer / test-writer`，编写失败测试后再进入实现。
+- 位置：`03_plan/TODO.md` / `00_meta/CURRENT_FOCUS.md`
+- 问题描述：`RagApplication.java` 和应用启动模块归属尚未明确。
+- 风险说明：如果下一轮直接创建 app 模块，可能再次扩大 TASK 边界。
+- 修改建议：进入 Spring Context、Controller、统一响应或 traceId 之前，先补充设计和 TODO，明确启动模块名称、职责和依赖关系。
 
 # 与需求一致性检查
 
-通过。用户要求的核心内容均已覆盖：
+通过。
 
-- 采用 C 方案：绞杀者式渐进拆分。
-- 第一阶段不单独拆 `tenant-service` / `iam-service`。
-- `auth-service` 合并认证、租户、用户、部门、角色、权限、权限快照、租户配置、租户配额、服务间鉴权。
-- 生成 `MICROSERVICE_API_SPEC.md`。
-- 生成 `MICROSERVICE_DATA_MODEL.md`。
-- 生成 `MICROSERVICE_TODO.md`。
-- RAG 问答权限链路改为 `rag-chat-service -> auth-service(permission snapshot / readable scope) -> retrieval-service -> vector/search -> rerank -> prompt-service -> llm-gateway-service`。
-- 文档上传权限链路改为 `document-service -> auth-service(check KB/document permission) -> MQ -> document-worker -> parser -> chunk -> embedding -> vector/search`。
-- 管理后台权限链路改为 `admin-config-service -> auth-service(api permission / data scope) -> target service`。
-- 保留后续从 `auth-service` 拆出 `iam-service` 或 `tenant-service` 的演进条件。
+- `rag-agent/` 已作为 Maven 父工程根目录。
+- 父 POM `modules` 只包含 `common`、`config`。
+- `common`、`config` 子模块能被 Maven 正常识别并测试通过。
+- 包路径使用 `com.lnzz.rag.common` 和 `com.lnzz.rag.config`。
+- 未创建 `rag-agent-app`。
+- 未创建微服务工程。
+- 未实现 TASK-002 或任何业务功能。
+
+# 与设计一致性检查
+
+通过。本轮保持 MVP 模块化单体方向，只落地基础工程骨架；未改变 `DESIGN.md` 中“模块化单体优先、生产按能力拆分”的主结论。
 
 # 与设计研究一致性检查
 
-通过。本轮没有推翻既有 `DESIGN_RESEARCH.md` 的“模块化单体优先、生产按能力拆分”结论，而是在微服务方向进一步选择 C 方案作为演进路径。
+通过。本轮实现符合 `DESIGN_RESEARCH.md` 推荐方案 A：模块化单体优先；没有提前进入微服务先行方案。
 
 # 与 Prompt 设计一致性检查
 
-通过。新 API、数据模型和 TODO 均要求 Prompt 由 `prompt-service` 管理，`rag-chat-service` 不得硬编码 Prompt，不得允许用户输入覆盖系统规则和业务规则。
-
-# API 与数据一致性检查
-
-通过。
-
-- API 文档中 `auth-service` 内部 API 提供权限快照、可读范围、API 权限、数据范围、KB 权限、文档权限、租户配置和租户配额能力。
-- 数据模型文档中 `rag_auth` schema 覆盖 auth、tenant、user、dept、role、permission、data_scope、permission_snapshot、tenant_config、tenant_quota。
-- API 和数据模型均明确禁止服务间跨库直接查询和跨 schema join。
-- API 与数据模型均保持 MySQL 8.0、Redis、MinIO、RabbitMQ/Kafka、OpenSearch/Elasticsearch、Milvus/Qdrant 主方案。
+不适用。本轮未涉及 Prompt 模板、AI 推理链路或模型输出契约。
 
 # TDD 与测试覆盖检查
 
-通过但有范围限制。本轮为纯文档任务，`TEST_REPORT.md` 已记录测试豁免原因和静态验证结果。后续进入微服务实施时，必须先针对 `MS-TASK-001` 写失败测试，不允许跳过 TDD Gate。
+通过。
+
+- RED：`mvn test` 因 `rag-agent/pom.xml` 缺失失败，符合 TASK-001 目标行为缺失。
+- GREEN：`mvn test` 通过，5 个架构测试全部通过。
+- 测试覆盖了 Maven 父子工程结构、模块清单、包结构、禁止模块和禁止越界配置。
+- Spring Context 未测试，原因已在 `TESTPLAN.md` 和 `TEST_REPORT.md` 中记录：本轮不创建 app 模块和 `RagApplication.java`。
 
 # 架构边界检查
 
 通过。
 
-- `auth-service` 是第一阶段权限、租户和 IAM 的统一服务。
-- `rag-chat-service` 只负责编排、会话、SSE 和引用落库。
-- `retrieval-service` 负责授权检索、向量/关键词召回、Rerank 和候选权限二次校验。
-- `llm-gateway-service` 是唯一模型供应商调用出口。
-- `document-service` 与 `document-worker` 职责分离。
-- `admin-config-service` 只做管理聚合和配置编排，不直接改目标服务数据库。
-- 服务间禁止跨库直接查询。
+- `common` 没有承载 RAG 业务逻辑。
+- `config` 没有接入真实基础设施配置。
+- 父工程没有声明 app 或微服务模块。
+- 未出现为通过测试而破坏模块边界的实现。
 
 # `.ai_rules` 执行审查
 
-通过。规则不是仅被引用，而是落到了以下位置：
+通过。规则不是只被引用，而是落到了以下位置：
 
-- `MICROSERVICE_API_SPEC.md` 记录 `/api/v1/`、`/internal/v1/`、DTO、错误码、鉴权、幂等、超时、重试、熔断、审计要求。
-- `MICROSERVICE_DATA_MODEL.md` 记录 MySQL 8.0、独立 schema、表归属、Outbox、consume log、缓存 key、索引归属和禁止跨库查询。
-- `MICROSERVICE_TODO.md` 的每个 TASK 记录适用 `.ai_rules` 文件、规则检查点和验收方式。
-- `TEST_REPORT.md` 记录 `.ai_rules` 合规验证结果。
-- `REVIEW.md` 本文件记录规则执行审查结论。
+- `TODO.md` 的 TASK-001 已记录适用规则、检查点、验收方式和本轮范围限制。
+- `TESTPLAN.md` 已记录 `.ai_rules` 合规验证范围。
+- `TEST_REPORT.md` 已记录 `CODING`、`STRUCTURE`、`SERVICE`、`COMMENT`、`LOGGING` 的适用 / 不适用结论。
+- 本审查文件已复核模块边界、包名、TDD 记录和禁止越界实现。
 
 # 发布建议
 
-微服务方向的 API、数据模型和任务拆分文档可以交付。软件不可发布，因为业务代码、服务工程、数据库脚本、服务契约测试、集成测试、部署和性能验证尚未实现。
+TASK-001 工程骨架可以交付。软件整体不建议发布，因为尚未创建启动应用、接口、数据库、鉴权、RAG、部署和业务验证能力。

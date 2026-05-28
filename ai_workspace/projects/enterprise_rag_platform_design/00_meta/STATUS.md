@@ -2,80 +2,77 @@
 
 - 文档名称：STATUS.md
 - 当前状态：已完成
-- 最近更新阶段：code-reviewer
-- 最近更新原因：基于 C 方案和 auth-service 合并 tenant / IAM 能力的新口径，新增微服务 API、数据模型和任务拆分文档，并完成静态验证与审查
+- 最近更新阶段：test-designer / test-writer / spec-driven-coder / test-executor / code-reviewer
+- 最近更新原因：完成 MVP 模块化单体方向 TASK-001：初始化 `rag-agent` Maven 父子工程骨架
 
 # 项目状态
 
 - 项目名称：企业级 RAG 知识库问答平台系统设计
 - 当前状态：review_done
 - 最近更新时间：2026-05-28
-- 当前阻断：无文档流程阻断；当前仍为微服务方向设计与计划文档任务，业务代码尚未实现，未创建 Java 服务工程，未执行 Maven 单元测试，不能声明软件可运行或可发布。
-- 下一阶段：若继续微服务实施，只能从 `03_plan/MICROSERVICE_TODO.md` 的 `MS-TASK-001` 开始，先进入 `test-designer / test-writer` 编写失败测试；不要直接进入 `spec-driven-coder`。
+- 当前阻断：TASK-001 无阻断；`RagApplication.java` 启动类和 app 模块归属仍未在设计中明确，后续进入 Spring Context、Controller、统一响应、traceId 或真实业务能力前必须先补充设计 / TODO 口径。
+- 下一阶段：若继续 MVP 模块化单体方向，不得直接越界创建 app 或微服务模块；应先确认启动模块归属，再按 `03_plan/TODO.md` 选择下一个单一 TASK。
 
-## 阶段记录
+# 本轮任务识别
 
-### initialized
+- workflow-orchestrator 结论：续接 `enterprise_rag_platform_design`，执行已规划任务中的 MVP 工程基础 TASK。
+- 任务类型：新功能开发 / 工程骨架初始化。
+- 所属模块：`common`、`config`。
+- 复杂度分层：L4 长期任务中的单个工程实现 TASK；本轮执行范围按 L2 TDD / Review 门禁控制。
+- 执行模式：用户已明确授权执行 TASK-001，自动推进 test-designer -> test-writer -> spec-driven-coder -> test-executor -> code-reviewer。
+- 本轮禁止项：未创建 `rag-agent-app`、`domain`、`infrastructure`、`services/*` 或任何微服务模块；未实现统一响应、异常、traceId、数据库、Redis、MQ、MinIO、LLM、RAG 业务功能。
 
-- 状态：完成
-- 说明：已创建任务目录和元信息文件。
+# 阶段记录
 
-### requirement_ready
-
-- 状态：完成
-- 说明：已生成 `01_requirement/REQUIREMENT.md`。
-
-### clarification_ready
-
-- 状态：完成
-- 说明：已生成 `01_requirement/CLARIFICATION.md`，并记录技术栈口径：Spring Security、MySQL 8.0、Spring AI、统一 LLM Gateway。
-
-### design_research_ready
+## initialized
 
 - 状态：完成
-- 说明：已生成 `02_design/DESIGN_RESEARCH.md`；本轮继续采用 C 方案“绞杀者式渐进拆分”，并把第一阶段独立 `tenant-service` / `iam-service` 调整为合并进 `auth-service`。
+- 说明：沿用既有 `enterprise_rag_platform_design` 任务目录，未新建重复任务。
 
-### design_ready
-
-- 状态：完成
-- 说明：既有 `02_design/DESIGN.md` 和 `02_design/MICROSERVICE_DESIGN.md` 可作为基础设计；本轮在 `MICROSERVICE_DESIGN.md` 顶部补充新口径覆盖说明。
-
-### prompt_ready
+## plan_ready
 
 - 状态：完成
-- 说明：已生成 `02_design/PROMPT_SPEC.md`；本轮继续要求 Prompt 由 `prompt-service` 配置化、版本化、审计化，不得硬编码散落在 `rag-chat-service`。
+- 说明：已将 `03_plan/TODO.md` 的 TASK-001 本轮范围回写为 `rag-agent` 父工程 + `common`、`config` 子模块；原 `RagApplication.java` 归属缺口已记录为后续待确认项。
 
-### api_ready
-
-- 状态：完成
-- 说明：本轮新增 `02_design/MICROSERVICE_API_SPEC.md`，定义 14 个服务的外部 `/api/v1/` 和内部 `/internal/v1/` API；`auth-service` 合并 tenant / IAM 能力。
-
-### data_ready
+## testing_designed
 
 - 状态：完成
-- 说明：本轮新增 `02_design/MICROSERVICE_DATA_MODEL.md`，定义独立 schema、表归属、Outbox、Inbox / consume log、缓存 key、索引归属和禁止跨库查询约束。
+- 说明：已更新 `05_test/TESTPLAN.md`，明确本轮只验证 Maven 父子工程、子模块识别、包结构和禁止模块。
 
-### plan_ready
-
-- 状态：完成
-- 说明：本轮新增 `03_plan/MICROSERVICE_TODO.md`，按 7 个阶段拆分 C 方案，共 23 个微服务原子 TASK，每个 TASK 均包含需求来源、设计来源、变更位置、测试策略、RED/GREEN、验收、风险回滚和 `.ai_rules` 检查点。
-
-### testing_done
+## test_written
 
 - 状态：完成
-- 说明：本轮未编写业务代码，未执行 Maven 单元测试；已更新 `05_test/TEST_REPORT.md`，采用文档静态检查和人工架构约束验证。
+- 说明：已新增 `CommonModuleStructureTest` 和 `ConfigModuleStructureTest`。
 
-### review_done
+## red_recorded
 
 - 状态：完成
-- 说明：已更新 `06_review/REVIEW.md`，结论为本轮微服务 API / 数据 / 任务拆分文档可交付；软件仍不可发布。
+- 命令：`cd rag-agent && mvn test`
+- 实际环境处理：全局 `JAVA_HOME` 为 `%JAVA_HOME17%` 且不可用，测试命令临时设置 `JAVA_HOME=E:\Program Files (x86)\engineers\Java\Jdk21`。
+- RED 结果：失败，原因是 `rag-agent/pom.xml` 缺失，Maven 报 `MissingProjectException`。
 
-### release_ready
+## implementation_done
+
+- 状态：完成
+- 说明：已创建 `rag-agent/pom.xml`、`rag-agent/common/pom.xml`、`rag-agent/config/pom.xml`，并预留 `com.lnzz.rag.common`、`com.lnzz.rag.config` 包结构。
+
+## testing_done
+
+- 状态：完成
+- 命令：`cd rag-agent && mvn test`
+- GREEN 结果：通过；Maven reactor 只包含 `rag-agent`、`rag-agent-common`、`rag-agent-config`；共执行 5 个测试，失败 0，错误 0，跳过 0。
+
+## review_done
+
+- 状态：完成
+- 说明：已更新 `06_review/REVIEW.md`，结论为 TASK-001 实现符合用户本轮范围和 `.ai_rules` 合规要求。
+
+## release_ready
 
 - 状态：未进入软件发布
-- 说明：本轮不进入发布阶段；当前仅设计与计划文档可交付，软件不可发布。
+- 说明：本轮仅完成工程骨架 TASK-001；系统仍无启动应用、接口、数据库、RAG 业务或部署能力，不建议按软件产品发布。
 
-### archived
+## archived
 
 - 状态：未归档
-- 说明：本轮是续接任务后的新阶段，不再沿用上一轮 `archived` 作为当前状态。
+- 说明：长期任务仍在持续推进。
